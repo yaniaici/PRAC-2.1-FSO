@@ -79,7 +79,7 @@
 #define MIN_COL 10
 #define MAX_COL 80
 #define MAX_FANTASMES 9 // Total maxim fantasmes
-#define MAX_THREADS // Numero maxim de threads = MAX_FANTASMES + NUM_MENJACOCOS
+#define MAX_THREADS 10 // Numero maxim de threads = MAX_FANTASMES + NUM_MENJACOCOS
 
 /* definir estructures d'informacio */
 typedef struct {
@@ -137,7 +137,7 @@ void carrega_parametres(const char * nom_fit) {
     exit(2);
   }
 
-  if (!feof(fit)) fscanf(fit, "%d %d %s %c\n", & n_fil1, & n_col, tauler, & c_req);
+  if (!feof(fit)) fscanf(fit, "%d %d %s %c\n", &n_fil1, &n_col, tauler, &c_req);
   else {
     fprintf(stderr, "Falten parametres al fitxer \'%s\'\n", nom_fit);
     fclose(fit);
@@ -171,13 +171,13 @@ void carrega_parametres(const char * nom_fit) {
 
   if (!feof(fit)) {
     while (!feof(fit) && (nFantasmes < MAX_FANTASMES)) {
-      fscanf(fit, "%d %d %d %f\n", & f1[nFantasmes].f, & f1[nFantasmes].c, & f1[nFantasmes].d, & f1[nFantasmes].r);
+      fscanf(fit, "%d %d %d %f\n", &f1[nFantasmes].f, &f1[nFantasmes].c, &f1[nFantasmes].d, &f1[nFantasmes].r);
       nFantasmes++;
     }
 
     int i = 0;
     while (i < nFantasmes) {
-      fprintf(stderr, "%d %d %d %f\n", & f1[nFantasmes].f, & f1[nFantasmes].c, & f1[nFantasmes].d, & f1[nFantasmes].r);
+      fprintf(stderr,"%d %d %d %f\n", f1[i].f, f1[i].c, f1[i].d, f1[i].r);
       i++;
     }
   } else {
@@ -189,6 +189,9 @@ void carrega_parametres(const char * nom_fit) {
   for (ind = 0; ind < nFantasmes; ind++) {
     if ((f1[ind].f < 1) || (f1[ind].f > n_fil1 - 3) || (f1[ind].c < 1) || (f1[ind].c > n_col - 2) || (f1[ind].d < 0) || (f1[ind].d > 3)) {
       fprintf(stderr, "Error: Fantasma 1: \n");
+      	fprintf(stderr,"\t1 =< f1.f (%d) =< n_fil1-3 (%d)\n",f1[ind].f,(n_fil1-3));
+	      fprintf(stderr,"\t1 =< f1.c (%d) =< n_col-2 (%d)\n",f1[ind].c,(n_col-2));
+	      fprintf(stderr,"\t0 =< f1.d (%d) =< 3\n",f1[ind].d);
       fclose(fit);
       exit(5);
     }
@@ -213,9 +216,9 @@ void inicialitza_joc(void) {
       int ind;
       for (ind = 0; ind < nFantasmes; ind++) {
         f1[ind].a = win_quincar(f1[ind].f, f1[ind].c);
-        if (f1[ind].a == c_req) {
+        if (f1[ind].a == c_req) 
           r = -7; // Fantasma a la paret
-        } else {
+         else {
           cocos = 0; // Comptem cocos
           for (i = 0; i < n_fil1 - 1; i++)
             for (j = 0; j < n_col; j++)
@@ -267,7 +270,7 @@ void inicialitza_joc(void) {
 
 /* funcio per moure un fantasma una posicio; retorna 1 si el fantasma   */
 /* captura al menjacocos, 0 altrament					*/
-int mou_fantasma(void * i) {
+void *mou_fantasma(void *index) {
   objecte seg;
   int ret;
   int k, vk, nd, vd[3];
@@ -275,17 +278,17 @@ int mou_fantasma(void * i) {
 
   do {
 
-    int index = (intptr_t) i;
+    int ind = (intptr_t) index;
     ret = 0;
     nd = 0;
-    int i;
+    int index;
 
-    for (i = 0; i < index; i++) {
+    for (index = 0; index < ind; index++) {
       for (k = -1; k <= 1; k++) /* provar direccio actual i dir. veines */ {
-        vk = (f1[i].d + k) % 4; /* direccio veina */
+        vk = (f1[index].d + k) % 4; /* direccio veina */
         if (vk < 0) vk += 4; /* corregeix negatius */
-        seg.f = f1[i].f + df[vk]; /* calcular posicio en la nova dir.*/
-        seg.c = f1[i].c + dc[vk];
+        seg.f = f1[index].f + df[vk]; /* calcular posicio en la nova dir.*/
+        seg.c = f1[index].c + dc[vk];
         seg.a = win_quincar(seg.f, seg.c); /* calcular caracter seguent posicio */
         if ((seg.a == ' ') || (seg.a == '.') || (seg.a == '0')) {
           vd[nd] = vk; /* memoritza com a direccio possible */
@@ -293,22 +296,22 @@ int mou_fantasma(void * i) {
         }
       }
       if (nd == 0) /* si no pot continuar, */
-        f1[i].d = (f1[i].d + 2) % 4; /* canvia totalment de sentit */
+        f1[index].d = (f1[index].d + 2) % 4; /* canvia totalment de sentit */
       else {
         if (nd == 1) /* si nomes pot en una direccio */
-          f1[i].d = vd[0]; /* li assigna aquesta */
+          f1[index].d = vd[0]; /* li assigna aquesta */
         else /* altrament */
-          f1[i].d = vd[rand() % nd]; /* segueix una dir. aleatoria */
+          f1[index].d = vd[rand() % nd]; /* segueix una dir. aleatoria */
 
-        seg.f = f1[i].f + df[f1[i].d]; /* calcular seguent posicio final */
-        seg.c = f1[i].c + dc[f1[i].d];
+        seg.f = f1[index].f + df[f1[index].d]; /* calcular seguent posicio final */
+        seg.c = f1[index].c + dc[f1[index].d];
         seg.a = win_quincar(seg.f, seg.c); /* calcular caracter seguent posicio */
-        win_escricar(f1[i].f, f1[i].c, f1[i].a, NO_INV); /* esborra posicio anterior */
-        f1[i].f = seg.f;
-        f1[i].c = seg.c;
-        f1[i].a = seg.a; /* actualitza posicio */
-        win_escricar(f1[i].f, f1[i].c, '1', NO_INV); /* redibuixa fantasma */
-        if (f1[i].a == '0') {
+        win_escricar(f1[index].f, f1[index].c, f1[index].a, NO_INV); /* esborra posicio anterior */
+        f1[index].f = seg.f;
+        f1[index].c = seg.c;
+        f1[index].a = seg.a; /* actualitza posicio */
+        win_escricar(f1[index].f, f1[index].c, '1', NO_INV); /* redibuixa fantasma */
+        if (f1[index].a == '0') {
           ret = 1;
           fi1 = 1;
         } /* ha capturat menjacocos */
@@ -318,15 +321,17 @@ int mou_fantasma(void * i) {
   } while (ret != 1);
 
   return NULL;
+
 }
 
 /* funcio per moure el menjacocos una posicio, en funcio de la direccio de   */
 /* moviment actual; retorna -1 si s'ha premut RETURN, 1 si s'ha menjat tots  */
 /* els cocos, i 0 altrament */
-int mou_menjacocos(void) {
+void *mou_menjacocos(void *null) {
   char strin[12];
   objecte seg;
   int tec, ret;
+  fi2 = 0;
 
   do {
     ret = 0;
@@ -358,7 +363,8 @@ int mou_menjacocos(void) {
       mc.f = seg.f;
       mc.c = seg.c; /* actualitza posicio */
       win_escricar(mc.f, mc.c, '0', NO_INV); /* redibuixa menjacocos */
-      if (seg.a == '.') {
+      if (seg.a == '.') 
+      {
         cocos--;
         sprintf(strin, "Cocos: %d", cocos);
         win_escristr(strin);
@@ -410,7 +416,7 @@ int main(int n_args, const char * ll_args[]) {
 
     // Iniciem temps
     inici=time(NULL);
-    while(((fi1 != 1) || (fi2 != 1) || (fi2 != -1))){
+    while((fi1 != 1) || (fi2 != 1) || (fi2 != -1)){
         final=time(NULL);
         seg=difftime(final,inici);
         min=seg/60;
