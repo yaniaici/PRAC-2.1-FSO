@@ -267,7 +267,7 @@ void inicialitza_joc(void) {
 
 /* funcio per moure un fantasma una posicio; retorna 1 si el fantasma   */
 /* captura al menjacocos, 0 altrament					*/
-int mou_fantasma(void *i) {
+int mou_fantasma(void * i) {
   objecte seg;
   int ret;
   int k, vk, nd, vd[3];
@@ -275,7 +275,7 @@ int mou_fantasma(void *i) {
 
   do {
 
-    int index = (intptr_t)i;
+    int index = (intptr_t) i;
     ret = 0;
     nd = 0;
     int i;
@@ -308,10 +308,10 @@ int mou_fantasma(void *i) {
         f1[i].c = seg.c;
         f1[i].a = seg.a; /* actualitza posicio */
         win_escricar(f1[i].f, f1[i].c, '1', NO_INV); /* redibuixa fantasma */
-        if (f1[i].a == '0'){
-         ret = 1;
-        fi1 = 1; 
-        }  /* ha capturat menjacocos */
+        if (f1[i].a == '0') {
+          ret = 1;
+          fi1 = 1;
+        } /* ha capturat menjacocos */
       }
     }
 
@@ -328,56 +328,54 @@ int mou_menjacocos(void) {
   objecte seg;
   int tec, ret;
 
-  do
-  {
-  ret = 0;
-  tec = win_gettec();
-  if (tec != 0)
-    switch (tec) /* modificar direccio menjacocos segons tecla */ {
-    case TEC_AMUNT:
-      mc.d = 0;
-      break;
-    case TEC_ESQUER:
-      mc.d = 1;
-      break;
-    case TEC_AVALL:
-      mc.d = 2;
-      break;
-    case TEC_DRETA:
-      mc.d = 3;
-      break;
-    case TEC_RETURN:
-      ret = -1;
-      fi2 = -1;
-      break;
-    }
-  seg.f = mc.f + df[mc.d]; /* calcular seguent posicio */
-  seg.c = mc.c + dc[mc.d];
-  seg.a = win_quincar(seg.f, seg.c); /* calcular caracter seguent posicio */
-  if ((seg.a == ' ') || (seg.a == '.')) {
-    win_escricar(mc.f, mc.c, ' ', NO_INV); /* esborra posicio anterior */
-    mc.f = seg.f;
-    mc.c = seg.c; /* actualitza posicio */
-    win_escricar(mc.f, mc.c, '0', NO_INV); /* redibuixa menjacocos */
-    if (seg.a == '.') {
-      cocos--;
-      sprintf(strin, "Cocos: %d", cocos);
-      win_escristr(strin);
-      if (cocos == 0) {
-        ret = 1;
-        fi2 = 1;
+  do {
+    ret = 0;
+    tec = win_gettec();
+    if (tec != 0)
+      switch (tec) /* modificar direccio menjacocos segons tecla */ {
+      case TEC_AMUNT:
+        mc.d = 0;
+        break;
+      case TEC_ESQUER:
+        mc.d = 1;
+        break;
+      case TEC_AVALL:
+        mc.d = 2;
+        break;
+      case TEC_DRETA:
+        mc.d = 3;
+        break;
+      case TEC_RETURN:
+        ret = -1;
+        fi2 = -1;
+        break;
+      }
+    seg.f = mc.f + df[mc.d]; /* calcular seguent posicio */
+    seg.c = mc.c + dc[mc.d];
+    seg.a = win_quincar(seg.f, seg.c); /* calcular caracter seguent posicio */
+    if ((seg.a == ' ') || (seg.a == '.')) {
+      win_escricar(mc.f, mc.c, ' ', NO_INV); /* esborra posicio anterior */
+      mc.f = seg.f;
+      mc.c = seg.c; /* actualitza posicio */
+      win_escricar(mc.f, mc.c, '0', NO_INV); /* redibuixa menjacocos */
+      if (seg.a == '.') {
+        cocos--;
+        sprintf(strin, "Cocos: %d", cocos);
+        win_escristr(strin);
+        if (cocos == 0) {
+          ret = 1;
+          fi2 = 1;
+        }
       }
     }
-  }
   } while (ret != 1 || ret != -1);
-  
-
 
   return NULL;
 }
 
 /* programa principal				    */
-int main(int n_args, const char * ll_args[]) {
+int main(int n_args,
+  const char * ll_args[]) {
   int fi1, fi2, rc, p; /* variables locals */
 
   srand(getpid()); /* inicialitza numeros aleatoris */
