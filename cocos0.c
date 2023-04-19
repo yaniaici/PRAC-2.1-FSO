@@ -374,9 +374,11 @@ int mou_menjacocos(void) {
 }
 
 /* programa principal				    */
-int main(int n_args,
-  const char * ll_args[]) {
-  int fi1, fi2, rc, p; /* variables locals */
+int main(int n_args, const char * ll_args[]) {
+  int rc;
+  char buffer[20];
+  time_t inici, final;
+  int min, seg; // temps restant
 
   srand(getpid()); /* inicialitza numeros aleatoris */
 
@@ -392,17 +394,38 @@ int main(int n_args,
   rc = win_ini( & n_fil1, & n_col, '+', INVERS); /* intenta crear taulell */
   if (rc == 0) /* si aconsegueix accedir a l'entorn CURSES */ {
     inicialitza_joc();
-    p = 0;
-    fi1 = 0;
-    fi2 = 0;
-    do /********** bucle principal del joc **********/ {
-      fi1 = mou_menjacocos();
-      p++;
-      if ((p % 2) == 0) /* ralentitza fantasma a 2*retard */
-        fi2 = mou_fantasma();
+    // p = 0;
+
+    // Thread menjacocos
+    int n = 0;
+    pthread_create(&tid[0], NULL, mou_menjacocos, NULL);
+    n++;
+
+    // Thread fantasma
+    for(int i = 1; i<= nFantasmes; i++){
+      pthread_create(&tid[i], NULL, mou_fantasma, (void*) (intptr_t) i);
+      n++;
+    }
+    printf("S'han creat %d threads\n\n" ,n);
+
+    // Iniciem temps
+    inici=time(NULL);
+    while(((fi1 != 1) || (fi2 != 1) || (fi2 != -1))){
+        final=time(NULL);
+        seg=difftime(final,inici);
+        min=seg/60;
+        seg=seg%60;
+        sprintf(buffer,"%2d:%2d", min, seg);
+        win_escristr(buffer);
+    }
+
+      for(int i = 0; i < n ;i++){
+        pthread_join(tid[i], NULL);
+      }
+      printf("\nJa han acabat tots els threads creats!\n");
+
       win_retard(retard);
-    } while (!fi1 && !fi2);
-    win_fi();
+      win_fi();
 
     if (fi1 == -1) printf("S'ha aturat el joc amb tecla RETURN!\n");
     else {
