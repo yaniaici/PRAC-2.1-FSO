@@ -161,7 +161,7 @@ void carrega_parametres(const char *nom_fit)
 	fclose(fit);
 	exit(2);
 	}
-  if ((f1.f < 1) || (f1.f > n_fil1-3) ||
+  if ((f1.f < 1) || (f1.f > n_fil-3) ||
 	(f1.c < 1) || (f1.c > n_col-2) ||
 	(f1.d < 0) || (f1.d > 3))
     {
@@ -241,6 +241,87 @@ void* mou_fantasma(void * index){
     actual.f = f1.f;
     actual.c = f1.c;
     actual.d = f1.d;
+
+    while (!fi1 && !fi2) {
+      nd = 0;
+      for (k = -1; k<=1; k++){
+        vk = (actual.d + k + 4) % 4; // provem direccio actual
+        if (vk < 0) vk = vk + 4;   // provem direccio actual
+        seg.f = actual.f + df[vk]; // seguent posicio
+        seg.c = actual.c + dc[vk]; // seguent posicio
+        pthread_mutex_lock(&mutex);
+        seg.a = win_quincar(seg.f,seg.c);
+        pthread_mutex_unlock(&mutex);
+        if ((seg.a='.')||(seg.a='.')||(seg.a='C')){
+          vd[nd] = vk;
+          nd++;
+        }
+      }
+
+      if(nd == 0){ // Cas de que no pugui continuar
+        actual.d = (actual.d + 2) % 4;
+      }
+      else if (nd == 1) {   // Cas de que pugui continuar per una direccio
+        actual.d = vd[0];
+      }
+      else {
+        actual.d = vd[random()%nd];
+
+        seg.f = actual.f + df[actual.d];
+        seg.c = actual.c + dc[actual.d];
+        pthread_mutex_lock(&mutex);
+
+        seg.a = win_quincar(seg.f,seg.c);
+        win_escricar(actual.f,actual.c,actual.a,NO_INV);
+        win_escricar(seg.f,seg.c,'0'+(intptr_t),NO_INV); // Pintem el fantasma
+        pthread_mutex_unlock(&mutex);
+        actual.f = seg.f;
+        actual.c = seg.c;
+        actual.a = seg.a;
+        
+        if (actual.a == 'C') {
+          fi2 = 1;
+        }
+
+        win_retard(retard*2);
+      }
+
+      pthread_exit((void*)(intptr_t)fi2);
+    }
+
+
+    void* mou_menjacocos(void* nul) {
+      
+      char cadena[33]; // 33?
+      objecte seg;
+      int tec;
+      int tics=0;
+      int min = 0;
+      int sec = 0;
+
+      while (!fi1 && !fi2) {
+        tec = win_gettec();
+        if (tec != 0)
+        switch (tec){
+          case TEC_AMUNT:
+            mc.d = 0;
+            break;
+          case TEC_ESQUER:
+            mc.d = 1;
+            break;
+          case TEC_AVALL:
+            mc.d = 2;
+            break;
+          case TEC_DRETA:
+            mc.d = 3;
+            break;
+          case TEC_RETURN:
+        }
+      }
+      
+
+
+    }
     
 
     
