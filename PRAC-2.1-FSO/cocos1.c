@@ -88,9 +88,7 @@ typedef struct {		/* per un objecte (menjacocos o fantasma) */
 } objecte;
 
 int n_threads;
-int min = 0;
-int sec = 0;
-pthread_t t_id[MAX_THREADS];
+pthread_t t_id[MAX_THREADS];		// Taula de ids de threads
 
 
 /* variables globals */
@@ -206,8 +204,6 @@ void inicialitza_joc(void)
        else
        {
 	cocos = 0;			/* compta el numero total de cocos */
-  sec = 0;
-  min = 0;
 	for (i=0; i<n_fil1-1; i++)
 	  for (j=0; j<n_col; j++)
 	    if (win_quincar(i,j)=='.') cocos++;
@@ -248,10 +244,10 @@ void* mou_fantasma(void * index)
 {
   int k, vk, nd, vd[3];
 	objecte seg, actual;
-	actual.a=f1.a;
-	actual.c=f1.c;
-	actual.f=f1.f;
-	actual.d=f1.d;
+	actual.a = f1.a;
+	actual.c = f1.c;
+	actual.f = f1.f;
+	actual.d = f1.d;
 	while (!fi1 && !fi2){
 			nd = 0;
   for (k=-1; k<=1; k++)		/* provar direccio actual i dir. veines */
@@ -355,8 +351,6 @@ int main(int n_args, const char *ll_args[])
 {
   int rc;		/* variables locals */
   srand(getpid());		/* inicialitza numeros aleatoris */
-	long int t_ini, t_fin;
-	long int secs;
   if ((n_args != 3) && (n_args !=4))
   {	fprintf(stderr,"Comanda: cocos1 fit_param num_fantasmes [retard]\n");
   	exit(1);
@@ -374,7 +368,7 @@ int main(int n_args, const char *ll_args[])
   {
     inicialitza_joc();
     int i, n=0;
-		time(&t_ini);
+		
 		for(i=0;i<n_threads;i++){
 			if((pthread_create(&t_id[n], NULL,mou_fantasma,(void *) (intptr_t) i))==0) n++; // Creacio de thread FANTASMES
 		}
@@ -386,7 +380,7 @@ int main(int n_args, const char *ll_args[])
 		}
 		pthread_join(coco,NULL);
     win_fi();
-		time(&t_fin);
+
 		if (fi1 == -1) printf("S'ha aturat el joc amb tecla RETURN!\n");
 		else { if (fi1) printf("Ha guanyat l'usuari!\n");
 			 else printf("Ha guanyat l'ordinador!\n");}
