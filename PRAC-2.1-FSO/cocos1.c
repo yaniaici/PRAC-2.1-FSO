@@ -104,10 +104,6 @@ int dc[] = {0, -1, 0, 1}; /* dalt, esquerra, baix, dreta */
 int cocos;	/* numero restant de cocos per menjar */
 int retard; /* valor del retard de moviment, en mil.lisegons */
 
-/* VARIABLES THREADS */
-
-pthread_mutex_t s;
-
 /* funcio per realitzar la carrega dels parametres de joc emmagatzemats */
 /* dins d'un fitxer de text, el nom del qual es passa per referencia a  */
 /* 'nom_fit'; si es detecta algun problema, la funcio avorta l'execucio */
