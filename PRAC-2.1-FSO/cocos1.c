@@ -163,7 +163,7 @@ void carrega_parametres(const char *nom_fit)
 	{
 		while (!feof(fit))
 		{
-			fscanf(fit, "%d %d %d\n", &f1[nFantasmes].f, &f1[nFantasmes].c, &f1[nFantasmes].d);
+			fscanf(fit, "%d %d %d %f\n", &f1[nFantasmes].f, &f1[nFantasmes].c, &f1[nFantasmes].d, &f1[nFantasmes].r);
 			if ((f1[nFantasmes].f < 1) ||
 				(f1[nFantasmes].f > n_fil1 - 3) ||
 				(f1[nFantasmes].c < 1) ||
@@ -199,6 +199,7 @@ void inicialitza_joc(void)
 {
 	int r, i, j;
 	char strin[50];
+	i = 0;
 
 	r = win_carregatauler(tauler, n_fil1 - 1, n_col, c_req);
 	if (r == 0)
