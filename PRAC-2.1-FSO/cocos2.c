@@ -310,28 +310,28 @@ int *mou_fantasma(void *pos)
 			}
 
 			if (nd == 0)
-			{						   /* si no pot continuar, */
+			{											 /* si no pot continuar, */
 				f1[posicio].d = (f1[posicio].d + 2) % 4; /* canvia totalment de sentit */
 			}
 			else
 			{
 				if (nd == 1)
-				{				  /* si nomes pot en una direccio */
+				{						   /* si nomes pot en una direccio */
 					f1[posicio].d = vd[0]; /* li assigna aquesta */
 				}
 				else
-				{							/* altrament */
+				{									 /* altrament */
 					f1[posicio].d = vd[rand() % nd]; /* segueix una dir. aleatoria */
 				}
 				seg.f = f1[posicio].f + df[f1[posicio].d]; /* calcular seguent posicio final */
 				seg.c = f1[posicio].c + dc[f1[posicio].d];
 				pthread_mutex_lock(&s);
-				seg.a = win_quincar(seg.f, seg.c);		/* calcular caracter seguent posicio */
+				seg.a = win_quincar(seg.f, seg.c);								   /* calcular caracter seguent posicio */
 				win_escricar(f1[posicio].f, f1[posicio].c, f1[posicio].a, NO_INV); /* esborra posicio anterior */
 				pthread_mutex_unlock(&s);
 				f1[posicio].f = seg.f;
 				f1[posicio].c = seg.c;
-				f1[posicio].a = seg.a;							   /* actualitza posicio */
+				f1[posicio].a = seg.a; /* actualitza posicio */
 				pthread_mutex_lock(&s);
 				win_escricar(f1[posicio].f, f1[posicio].c, '1', NO_INV); /* redibuixa fantasma */
 				pthread_mutex_unlock(&s);
@@ -340,51 +340,49 @@ int *mou_fantasma(void *pos)
 					ret = 1; /* ha capturat menjacocos */
 			}
 
-				if (fi2 == 0)
+			if (fi2 == 0)
 				fi2 = ret;
-
 		}
 		win_retard(retard);
 		p++;
-		}
-		while (!fi1 && !fi2);
-	}
+	} while (!fi1 && !fi2);
+}
 
-	/* funcio per moure el menjacocos una posicio, en funcio de la direccio de   */
-	/* moviment actual; retorna -1 si s'ha premut RETURN, 1 si s'ha menjat tots  */
-	/* els cocos, i 0 altrament */
-	int *mou_menjacocos(void *nul)
+/* funcio per moure el menjacocos una posicio, en funcio de la direccio de   */
+/* moviment actual; retorna -1 si s'ha premut RETURN, 1 si s'ha menjat tots  */
+/* els cocos, i 0 altrament */
+int *mou_menjacocos(void *nul)
+{
+	char strin[120];
+	objecte seg;
+	int tec, ret;
+
+	do
 	{
-		char strin[120];
-		objecte seg;
-		int tec, ret;
-
-		do
-		{
 
 		ret = 0;
 		pthread_mutex_lock(&s);
 		tec = win_gettec();
 		pthread_mutex_unlock(&s);
 		if (tec != 0)
-				switch (tec) /* modificar direccio menjacocos segons tecla */
-				{
-				case TEC_AMUNT:
+			switch (tec) /* modificar direccio menjacocos segons tecla */
+			{
+			case TEC_AMUNT:
 				mc.d = 0;
 				break;
-				case TEC_ESQUER:
+			case TEC_ESQUER:
 				mc.d = 1;
 				break;
-				case TEC_AVALL:
+			case TEC_AVALL:
 				mc.d = 2;
 				break;
-				case TEC_DRETA:
+			case TEC_DRETA:
 				mc.d = 3;
 				break;
-				case TEC_RETURN:
+			case TEC_RETURN:
 				ret = -1;
 				break;
-				}
+			}
 		seg.f = mc.f + df[mc.d]; /* calcular seguent posicio */
 		seg.c = mc.c + dc[mc.d];
 		pthread_mutex_lock(&s);
@@ -392,17 +390,17 @@ int *mou_fantasma(void *pos)
 		pthread_mutex_unlock(&s);
 		if ((seg.a == ' ') || (seg.a == '.'))
 		{
-				pthread_mutex_lock(&s);
-				win_escricar(mc.f, mc.c, ' ', NO_INV); /* esborra posicio anterior */
-				pthread_mutex_unlock(&s);
-				mc.f = seg.f;
-				mc.c = seg.c;						   /* actualitza posicio */
-				pthread_mutex_lock(&s);
-				win_escricar(mc.f, mc.c, '0', NO_INV); /* redibuixa menjacocos */
-				pthread_mutex_unlock(&s);
+			pthread_mutex_lock(&s);
+			win_escricar(mc.f, mc.c, ' ', NO_INV); /* esborra posicio anterior */
+			pthread_mutex_unlock(&s);
+			mc.f = seg.f;
+			mc.c = seg.c; /* actualitza posicio */
+			pthread_mutex_lock(&s);
+			win_escricar(mc.f, mc.c, '0', NO_INV); /* redibuixa menjacocos */
+			pthread_mutex_unlock(&s);
 
-				if (seg.a == '.')
-				{
+			if (seg.a == '.')
+			{
 				cocos--;
 				pthread_mutex_lock(&s);
 				sprintf(strin, "Cocos: %d", cocos);
@@ -410,16 +408,16 @@ int *mou_fantasma(void *pos)
 				win_escristr(strin);
 				if (cocos == 0)
 					ret = 1;
-				}
+			}
 		}
 
 		win_retard(retard);
 		fi1 = ret;
 
-		} while (!fi1 && !fi2);
-	}
+	} while (!fi1 && !fi2);
+}
 
-	void *counter(void *nul)
+void *counter(void *nul) // Funció auxiliar que ens serveix de comptador de temps
 {
 	char strin[35];
 	segons = 0;
@@ -427,8 +425,8 @@ int *mou_fantasma(void *pos)
 	do
 	{
 		pthread_mutex_lock(&s);
-	    sprintf(strin, "Cocos: %03d  Temps: %02d:%02d", cocos, minuts, segons);
-	    win_escristr(strin);
+		sprintf(strin, "Cocos: %03d  Temps: %02d:%02d", cocos, minuts, segons);
+		win_escristr(strin);
 		pthread_mutex_unlock(&s);
 		win_retard(1000);
 		segons++;
@@ -437,10 +435,10 @@ int *mou_fantasma(void *pos)
 			minuts++;
 			segons = 0;
 		}
-	}while(!fi1 && !fi2);
+	} while (!fi1 && !fi2);
 }
 
-	/* programa principal				    */
+/* programa principal				    */
 int main(int n_args, const char *ll_args[])
 {
 	/* DECLARACIO THREADS */
