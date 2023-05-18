@@ -197,7 +197,8 @@ void carrega_parametres(const char *nom_fit)
 /* funcio per inicialitar les variables i visualitzar l'estat inicial del joc */
 void inicialitza_joc(void)
 {
-	int r, i, j;
+	int r, j;
+	int i;
 	char strin[50];
 	i = 0;
 

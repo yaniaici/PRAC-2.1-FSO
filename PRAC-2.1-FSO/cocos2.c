@@ -203,6 +203,7 @@ void inicialitza_joc(void)
 {
 	int r, i, j;
 	char strin[50];
+	i = 0;
 
 	r = win_carregatauler(tauler, n_fil1 - 1, n_col, c_req);
 	if (r == 0)
