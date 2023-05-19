@@ -66,6 +66,7 @@
 #include <unistd.h>	   /* per getpid() */
 #include "winsuport.h" /* incloure definicions de funcions propies */
 #include <pthread.h>
+#include <stdint.h>
 
 #define MIN_FIL 7 /* definir limits de variables globals */
 #define MAX_FIL 25
@@ -224,6 +225,12 @@ void inicialitza_joc(void)
 						if (win_quincar(i, j) == '.')
 							cocos++;
 
+			for(int z=1; z<nFantasmes;z++)
+              {
+                printf("Numero de fantasma a pintar %d", z);
+                win_escricar(f1[z].f,f1[z].c,'1',NO_INV);
+              }
+
 				win_escricar(mc.f, mc.c, '0', NO_INV);
 				win_escricar(f1[i].f, f1[i].c, '1', NO_INV);
 
@@ -274,7 +281,7 @@ int *mou_fantasma(void *pos)
 	objecte seg;
 	int ret;
 	int k, vk, nd, vd[3], p;
-	int posicio = (int)pos;
+	int posicio = (intptr_t)pos;
 	p = 0;
 
 	if (posicio < 0)
@@ -448,7 +455,7 @@ int main(int n_args, const char *ll_args[])
 	pthread_t tFantasmes[MAX_THREADS];
 	pthread_t tCounter;
 
-	int rc, p; /* variables locals */
+	int rc; /* variables locals */
 	int i;
 
 	srand(getpid()); /* inicialitza numeros aleatoris */
@@ -469,18 +476,17 @@ int main(int n_args, const char *ll_args[])
 	if (rc == 0)								/* si aconsegueix accedir a l'entorn CURSES */
 	{
 		inicialitza_joc();
-		p = 0;
 		fi1 = 0;
 		fi2 = 0;
 		pthread_mutex_init(&s, NULL);
-		pthread_create(&t_coco, NULL, mou_menjacocos, 0);
+		pthread_create(&t_coco, NULL, (void* (*)(void*))mou_menjacocos, NULL);
 		for (i = 0; i < nFantasmes; i++)
 		{
-			pthread_create(&tFantasmes[i], NULL, mou_fantasma, (void **)i);
+			pthread_create(&tFantasmes[i], NULL, (void* (*)(void*))mou_fantasma, (void*)(intptr_t)i);
+
 		}
 		pthread_create(&tCounter, NULL, counter, 0);
-		while (!fi1 && !fi2)
-			;
+		while (!fi1 && !fi2);
 		pthread_join(t_coco, NULL);
 		for (i = 0; i < nFantasmes; i++)
 		{
