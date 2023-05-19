@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*									                                         */
-/*				     cocos2.c				                                 */
+/*				     cocos3.c				                                 */
 /*									                                         */
 /*     Programa inicial d'exemple per a les practiques 2.1 i 2.2 de FSO.     */
 /*     Es tracta del joc del menjacocos: es dibuixa un laberint amb una      */
@@ -64,8 +64,9 @@
 #include <stdio.h>	   /* incloure definicions de funcions estandard */
 #include <stdlib.h>	   /* per exit() */
 #include <unistd.h>	   /* per getpid() */
-#include "winsuport.h" /* incloure definicions de funcions propies */
+#include "winsuport2.h" /* incloure definicions de funcions propies */
 #include <pthread.h>
+#include "memoria.h"
 
 #define MIN_FIL 7 /* definir limits de variables globals */
 #define MAX_FIL 25
@@ -88,7 +89,7 @@ int n_fil1, n_col; /* dimensions del camp de joc */
 char tauler[70];   /* nom del fitxer amb el laberint de joc */
 char c_req;		   /* caracter de pared del laberint */
 int fi1;
-int fi2;
+int *fi2;
 int minuts;
 int segons;
 
@@ -106,7 +107,7 @@ int retard; /* valor del retard de moviment, en mil.lisegons */
 
 /* VARIABLES THREADS */
 
-pthread_mutex_t s = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t s;
 
 /* funcio per realitzar la carrega dels parametres de joc emmagatzemats */
 /* dins d'un fitxer de text, el nom del qual es passa per referencia a  */
