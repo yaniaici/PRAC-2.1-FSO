@@ -67,6 +67,7 @@
 #include "winsuport2.h" /* incloure definicions de funcions propies */
 #include <pthread.h>
 #include "memoria.h"
+#include <sys/wait.h>
 
 #define MIN_FIL 7 /* definir limits de variables globals */
 #define MAX_FIL 25
@@ -92,6 +93,7 @@ int fi1;
 int *fi2;
 int minuts;
 int segons;
+int id_win, id_fi2;
 
 /* VARIABLES OBJECTES */
 
@@ -107,7 +109,10 @@ int retard; /* valor del retard de moviment, en mil.lisegons */
 
 /* VARIABLES THREADS */
 
-pthread_mutex_t s;
+pthread_t t_coco;
+pid_t tpid[MAX_THREADS];
+pthread_t tCounter;
+
 
 /* funcio per realitzar la carrega dels parametres de joc emmagatzemats */
 /* dins d'un fitxer de text, el nom del qual es passa per referencia a  */
@@ -268,88 +273,6 @@ void inicialitza_joc(void)
 	}
 }
 
-/* funcio per moure un fantasma una posicio; retorna 1 si el fantasma   */
-/* captura al menjacocos, 0 altrament					*/
-int *mou_fantasma(void *pos)
-{
-	objecte seg;
-	int ret;
-	int k, vk, nd, vd[3], p;
-	int posicio = (int)pos;
-	p = 0;
-
-	if (posicio < 0)
-	{
-		fprintf(stderr, "Error: index incorrecte\n");
-		exit(6);
-	}
-	do
-	{
-		nd = 0;
-		ret = 0;
-
-		if ((p % 2) == 0)
-		{ // Ralentitza fantasma a 2*retard
-
-			for (k = -1; k <= 1; k++)
-			{ /* provar direccio actual i dir. veines */
-
-				vk = (f1[posicio].d + k) % 4; /* direccio veina */
-				if (vk < 0)
-					vk += 4; /* corregeix negatius */
-
-				seg.f = f1[posicio].f + df[vk]; /* calcular posicio en la nova dir.*/
-				seg.c = f1[posicio].c + dc[vk];
-				pthread_mutex_lock(&s);
-				seg.a = win_quincar(seg.f, seg.c); /* calcular caracter seguent posicio */
-				pthread_mutex_unlock(&s);
-
-				if ((seg.a == ' ') || (seg.a == '.') || (seg.a == '0'))
-				{
-					vd[nd] = vk; /* memoritza com a direccio possible */
-					nd++;
-				}
-			}
-
-			if (nd == 0)
-			{											 /* si no pot continuar, */
-				f1[posicio].d = (f1[posicio].d + 2) % 4; /* canvia totalment de sentit */
-			}
-			else
-			{
-				if (nd == 1)
-				{						   /* si nomes pot en una direccio */
-					f1[posicio].d = vd[0]; /* li assigna aquesta */
-				}
-				else
-				{									 /* altrament */
-					f1[posicio].d = vd[rand() % nd]; /* segueix una dir. aleatoria */
-				}
-				seg.f = f1[posicio].f + df[f1[posicio].d]; /* calcular seguent posicio final */
-				seg.c = f1[posicio].c + dc[f1[posicio].d];
-				pthread_mutex_lock(&s);
-				seg.a = win_quincar(seg.f, seg.c);								   /* calcular caracter seguent posicio */
-				win_escricar(f1[posicio].f, f1[posicio].c, f1[posicio].a, NO_INV); /* esborra posicio anterior */
-				pthread_mutex_unlock(&s);
-				f1[posicio].f = seg.f;
-				f1[posicio].c = seg.c;
-				f1[posicio].a = seg.a; /* actualitza posicio */
-				pthread_mutex_lock(&s);
-				win_escricar(f1[posicio].f, f1[posicio].c, '1', NO_INV); /* redibuixa fantasma */
-				pthread_mutex_unlock(&s);
-
-				if (f1[posicio].a == '0')
-					ret = 1; /* ha capturat menjacocos */
-			}
-
-			if (fi2 == 0)
-				fi2 = ret;
-		}
-		win_retard(retard);
-		p++;
-	} while (!fi1 && !fi2);
-}
-
 /* funcio per moure el menjacocos una posicio, en funcio de la direccio de   */
 /* moviment actual; retorna -1 si s'ha premut RETURN, 1 si s'ha menjat tots  */
 /* els cocos, i 0 altrament */
@@ -363,9 +286,8 @@ int *mou_menjacocos(void *nul)
 	{
 
 		ret = 0;
-		pthread_mutex_lock(&s);
 		tec = win_gettec();
-		pthread_mutex_unlock(&s);
+
 		if (tec != 0)
 			switch (tec) /* modificar direccio menjacocos segons tecla */
 			{
@@ -387,26 +309,18 @@ int *mou_menjacocos(void *nul)
 			}
 		seg.f = mc.f + df[mc.d]; /* calcular seguent posicio */
 		seg.c = mc.c + dc[mc.d];
-		pthread_mutex_lock(&s);
 		seg.a = win_quincar(seg.f, seg.c); /* calcular caracter seguent posicio */
-		pthread_mutex_unlock(&s);
 		if ((seg.a == ' ') || (seg.a == '.'))
 		{
-			pthread_mutex_lock(&s);
 			win_escricar(mc.f, mc.c, ' ', NO_INV); /* esborra posicio anterior */
-			pthread_mutex_unlock(&s);
 			mc.f = seg.f;
 			mc.c = seg.c; /* actualitza posicio */
-			pthread_mutex_lock(&s);
 			win_escricar(mc.f, mc.c, '0', NO_INV); /* redibuixa menjacocos */
-			pthread_mutex_unlock(&s);
 
 			if (seg.a == '.')
 			{
 				cocos--;
-				pthread_mutex_lock(&s);
 				sprintf(strin, "Cocos: %d", cocos);
-				pthread_mutex_unlock(&s);
 				win_escristr(strin);
 				if (cocos == 0)
 					ret = 1;
@@ -426,10 +340,8 @@ void *counter(void *nul) // Funció auxiliar que ens serveix de comptador de tem
 	minuts = 0;
 	do
 	{
-		pthread_mutex_lock(&s);
 		sprintf(strin, "Cocos: %03d  Temps: %02d:%02d", cocos, minuts, segons);
 		win_escristr(strin);
-		pthread_mutex_unlock(&s);
 		win_retard(1000);
 		segons++;
 		if (segons == 60)
@@ -443,14 +355,10 @@ void *counter(void *nul) // Funció auxiliar que ens serveix de comptador de tem
 /* programa principal				    */
 int main(int n_args, const char *ll_args[])
 {
-	/* DECLARACIO THREADS */
-
-	pthread_t t_coco;
-	pthread_t tFantasmes[MAX_THREADS];
-	pthread_t tCounter;
-
 	int rc, p; /* variables locals */
 	int i;
+	void *p_win;
+	char a1[20], a2[20], a3[20], a4[20], a5[20], a6[20], a7[20], a8[20], a9[20];
 
 	srand(getpid()); /* inicialitza numeros aleatoris */
 
@@ -469,26 +377,47 @@ int main(int n_args, const char *ll_args[])
 	rc = win_ini(&n_fil1, &n_col, '+', INVERS); /* intenta crear taulell */
 	if (rc == 0)								/* si aconsegueix accedir a l'entorn CURSES */
 	{
+		id_win = ini_mem(rc);
+		p_win = map_mem(id_win);
+		fi1 = 0;
+		id_fi2 = ini_mem(sizeof(fi2));
+		fi2 = (int *)map_mem(id_fi2);
+
+		sprintf(a5, "%i", id_win);
+		sprintf(a6, "%i", n_fil1);
+		sprintf(a7, "%i", n_col);
+		sprintf(a8, "%i", retard);
+		sprintf(a9, "%i", id_fi2);
+
+		win_set(p_win,n_fil1,n_col);
+
 		inicialitza_joc();
 		p = 0;
-		fi1 = 0;
-		fi2 = 0;
-		pthread_mutex_init(&s, NULL);
 		pthread_create(&t_coco, NULL, mou_menjacocos, 0);
-		for (i = 0; i < nFantasmes; i++)
-		{
-			pthread_create(&tFantasmes[i], NULL, mou_fantasma, (void **)i);
+		for (i = 0; i < nFantasmes; i++) {
+			tpid[p] = fork();
+			if (tpid[p] == (pid_t) 0) {
+			sprintf(a1, "%i", (i+1));
+			sprintf(a2, "%i", f1[p].f);
+			sprintf(a3, "%i", f1[p].c);
+			sprintf(a4, "%i", f1[p].d);
+			execlp("./fantasmes", "fantasmes", a1, a2, a3, a4, a5, a6, a7, a8, a9);
+			exit(0);
+			} else if (tpid[p] > 0) p++;
 		}
+
 		pthread_create(&tCounter, NULL, counter, 0);
-		while (!fi1 && !fi2)
-			;
-		pthread_join(t_coco, NULL);
-		for (i = 0; i < nFantasmes; i++)
+
+		while (!fi1 && !(*fi2))
+		win_update();
+		for (i = 0; i < p; i++)
 		{
-			pthread_join(tFantasmes[i], NULL);
+			waitpid(tpid[i],NULL,0);
 		}
+		
+		pthread_join(t_coco, NULL);
 		pthread_join(tCounter, NULL);
-		pthread_mutex_destroy(&s);
+
 		win_fi();
 
 		if (fi1 == -1)
