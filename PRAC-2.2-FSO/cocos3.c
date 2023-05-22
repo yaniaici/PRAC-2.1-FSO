@@ -68,6 +68,7 @@
 #include <pthread.h>
 #include "memoria.h"
 #include <sys/wait.h>
+#include "missatge.h"
 
 #define MIN_FIL 7 /* definir limits de variables globals */
 #define MAX_FIL 25
@@ -89,11 +90,9 @@ typedef struct
 int n_fil1, n_col; /* dimensions del camp de joc */
 char tauler[70];   /* nom del fitxer amb el laberint de joc */
 char c_req;		   /* caracter de pared del laberint */
-int fi1;
-int *fi2;
 int minuts;
 int segons;
-int id_win, id_fi2;
+int fi1, fi2;
 
 /* VARIABLES OBJECTES */
 
@@ -327,7 +326,7 @@ int *mou_menjacocos(void *nul)
 			}
 		}
 
-		win_retard(retard);
+		win_retard(mc.r*retard);
 		fi1 = ret;
 
 	} while (!fi1 && !fi2);
@@ -355,10 +354,32 @@ void *counter(void *nul) // Funció auxiliar que ens serveix de comptador de tem
 /* programa principal				    */
 int main(int n_args, const char *ll_args[])
 {
-	int rc, p; /* variables locals */
+	int rc;
 	int i;
 	void *p_win;
-	char a1[20], a2[20], a3[20], a4[20], a5[20], a6[20], a7[20], a8[20], a9[20];
+	char str_win[20];
+	char str_nfil[10];
+	char str_ncol[10];
+	char str_fi1[20];
+	int id_fi1;
+	int *p_fi1;
+	char str_fi2[20];
+	int id_fi2;				// CREACIO VARIABLES ZONES COMPARTIDES (IDENTIFICADORS PUNTERS I STRINGS)
+	int *p_fi2;
+	char str_df[20];
+	int id_df;
+	int *p_df;
+	char str_dc[20];
+	int id_dc;
+	int *p_dc;
+	char str_f1[20];
+	int id_f1;
+	char str_mc[20];
+	int id_mc;
+	char str_retard[20];
+	int id_retard;
+	int *p_retard;
+
 
 	srand(getpid()); /* inicialitza numeros aleatoris */
 
@@ -375,48 +396,103 @@ int main(int n_args, const char *ll_args[])
 		retard = 100;
 
 	rc = win_ini(&n_fil1, &n_col, '+', INVERS); /* intenta crear taulell */
-	if (rc == 0)								/* si aconsegueix accedir a l'entorn CURSES */
+	if (rc >= 0)								/* si aconsegueix accedir a l'entorn CURSES */
 	{
-		id_win = ini_mem(rc);
-		p_win = map_mem(id_win);
-		fi1 = 0;
-		id_fi2 = ini_mem(sizeof(fi2));
-		fi2 = (int *)map_mem(id_fi2);
+		int id_vict = ini_mem(rc);
+		p_win = map_mem(id_vict);
 
-		sprintf(a5, "%i", id_win);
-		sprintf(a6, "%i", n_fil1);
-		sprintf(a7, "%i", n_col);
-		sprintf(a8, "%i", retard);
-		sprintf(a9, "%i", id_fi2);
+		sprintf(str_f1, "%i", id_vict);
+		sprintf(str_nfil,"%i",n_fil1);
+		sprintf(str_ncol,"%i",n_col);
 
 		win_set(p_win,n_fil1,n_col);
-
 		inicialitza_joc();
-		p = 0;
-		pthread_create(&t_coco, NULL, mou_menjacocos, 0);
-		for (i = 0; i < nFantasmes; i++) {
-			tpid[p] = fork();
-			if (tpid[p] == (pid_t) 0) {
-			sprintf(a1, "%i", (i+1));
-			sprintf(a2, "%i", f1[p].f);
-			sprintf(a3, "%i", f1[p].c);
-			sprintf(a4, "%i", f1[p].d);
-			execlp("./fantasmes", "fantasmes", a1, a2, a3, a4, a5, a6, a7, a8, a9);
-			exit(0);
-			} else if (tpid[p] > 0) p++;
+		id_fi1 = ini_mem(sizeof(int));
+		*p_fi1 = map_mem(id_fi1);		// ZONA DE CREACIO, MAPEIG I IDENTIFICADORS DE ZONES COMPARTIDES
+		*p_fi1 = fi1;
+		sprintf(str_fi1,"%i",id_fi1);
+
+
+		id_fi2 = ini_mem(sizeof(int));
+		*p_fi2 = map_mem(id_fi2);		// ZONA DE CREACIO, MAPEIG I IDENTIFICADORS DE ZONES COMPARTIDES
+		*p_fi2 = fi2;
+		sprintf(str_fi2,"%i",id_fi2);
+
+		id_df = ini_mem(sizeof(int)*4);
+        *p_df = map_mem(id_df);
+        p_df[0] = df[0]; 
+        p_df[1] = df[1]; 
+        p_df[2] = df[2];		// ZONA DE CREACIO, MAPEIG I IDENTIFICADORS DE ZONES COMPARTIDES
+		p_df[3] = df[3];
+		p_df[3] = df[3];
+
+
+        id_dc = ini_mem(sizeof(int)*4);
+        *p_dc = map_mem(id_dc); 
+        p_dc[0] = dc[0]; 
+        p_dc[1] = dc[1];	// ZONA DE CREACIO, MAPEIG I IDENTIFICADORS DE ZONES COMPARTIDES
+        p_dc[2] = dc[2]; 	
+        p_dc[3] = dc[3]; 
+        sprintf(str_dc,"%i",id_dc); 
+
+
+        id_f1 = ini_mem(sizeof(objecte)*nFantasmes);
+        objecte *p_f1 = map_mem(id_f1); 
+        for(i = 0; i < nFantasmes; i++){					// ZONA COMPARTIDA FANTASMES
+            p_f1[i] = f1[i]; 
+        }
+		sprintf(str_f1,"%i",id_f1); //passem l'identificador a string
+
+
+        id_mc = ini_mem(sizeof(objecte)); 
+        objecte *p_mc = map_mem(id_mc); 		// ZONA COMPARTIDA MENJACOCOS
+        *p_mc = mc;
+		sprintf(str_mc,"%i",id_mc); //passem l'identificador a string
+
+		id_retard = ini_mem(sizeof(int));
+		*p_retard = map_mem(id_retard);
+		*p_retard = retard;
+		sprintf(str_retard,"%i",id_retard); //passem l'identificador a string
+
+	    pthread_create(&t_coco,NULL,mou_menjacocos,NULL);
+
+		int j = 0;
+		char proc_id[20]; // String on guardarem els ids dels processos
+
+		for ( i = 0; i < nFantasmes; i++) {
+			tpid[j] = fork();
+			if (tpid[j] == (pid_t) 0) {
+				sprintf(proc_id, "%i", i);
+				execlp("./fantasma3","fantasma3",str_f1,str_fi2,proc_id,str_f1,str_mc,str_retard,str_win,str_nfil,str_ncol,(char * )0);
+			} else if (tpid[j] >0) {
+				j++;
+			} else {
+				fprintf("Error en el proces del fantasma %d\n", i);
+			}
 		}
 
+
+
+		do{
+          win_update();
+          win_retard(100);
+          fi2 = *p_fi2;
+          *p_fi1 = fi1; 
+          
+        }while(!fi1&&!fi2);
+
+		pthread_join(t_coco, (void **)&fi1);
 		pthread_create(&tCounter, NULL, counter, 0);
-
-		while (!fi1 && !(*fi2))
-		win_update();
-		for (i = 0; i < p; i++)
-		{
-			waitpid(tpid[i],NULL,0);
-		}
-		
-		pthread_join(t_coco, NULL);
 		pthread_join(tCounter, NULL);
+		for(int tind=0; tind<nFantasmes; tind++) {
+			waitpid(tpid[tind],&fi2,NULL); // S'espera a que el thread acabi
+		}
+
+		elim_mem(id_fi1); 
+        elim_mem(id_fi2); 
+        elim_mem(id_df);  // ELIMINACIO ZONES COMPARTIDES
+        elim_mem(id_dc); 
+        elim_mem(id_f1);
 
 		win_fi();
 

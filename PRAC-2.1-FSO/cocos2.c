@@ -351,7 +351,7 @@ int *mou_fantasma(void *pos)
 			if (fi2 == 0)
 				fi2 = ret;
 		}
-		win_retard(retard);
+		win_retard(mc.r*retard);
 		p++;
 	} while (!fi1 && !fi2);
 }
@@ -419,7 +419,7 @@ int *mou_menjacocos(void *nul)
 			}
 		}
 
-		win_retard(retard);
+		win_retard(mc.r*retard);
 		fi1 = ret;
 
 	} while (!fi1 && !fi2);
@@ -486,7 +486,6 @@ int main(int n_args, const char *ll_args[])
 
 		}
 		pthread_create(&tCounter, NULL, counter, 0);
-		while (!fi1 && !fi2);
 		pthread_join(t_coco, NULL);
 		for (i = 0; i < nFantasmes; i++)
 		{

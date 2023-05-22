@@ -335,7 +335,7 @@ int *mou_fantasma(void *pos)
 			if (fi2 == 0)
 				fi2 = ret;
 		}
-		win_retard(retard);
+		win_retard(mc.r*retard);
 		p++;
 	} while (!fi1 && !fi2);
 }
@@ -392,7 +392,7 @@ int *mou_menjacocos(void *nul)
 			}
 		}
 
-		win_retard(retard);
+		win_retard(mc.r*retard);
 		fi1 = ret;
 
 	} while (!fi1 && !fi2);
