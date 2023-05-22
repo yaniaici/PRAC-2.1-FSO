@@ -358,25 +358,7 @@ int main(int n_args, const char *ll_args[])
 	char str_win[20];
 	char str_nfil[10];
 	char str_ncol[10];
-	char str_fi1[20];
-	int id_fi1;
-	int *p_fi1;
-	char str_fi2[20];
-	int id_fi2;				// CREACIO VARIABLES ZONES COMPARTIDES (IDENTIFICADORS PUNTERS I STRINGS)
-	int *p_fi2;
-	char str_df[20];
-	int id_df;
-	int *p_df;
-	char str_dc[20];
-	int id_dc;
-	int *p_dc;
-	char str_f1[20];
-	int id_f1;
-	char str_mc[20];
-	int id_mc;
-	char str_retard[20];
-	int id_retard;
-	int *p_retard;
+
 
 
 	srand(getpid()); /* inicialitza numeros aleatoris */
@@ -396,6 +378,26 @@ int main(int n_args, const char *ll_args[])
 	rc = win_ini(&n_fil1, &n_col, '+', INVERS); /* intenta crear taulell */
 	if (rc >= 0)								/* si aconsegueix accedir a l'entorn CURSES */
 	{
+
+			char str_fi1[20];
+		int id_fi1;
+		int *p_fi1;
+		char str_fi2[20];
+		int id_fi2;				// CREACIO VARIABLES ZONES COMPARTIDES (IDENTIFICADORS PUNTERS I STRINGS)
+		int *p_fi2;
+		char str_df[20];
+		int id_df;
+		int *p_df;
+		char str_dc[20];
+		int id_dc;
+		int *p_dc;
+		char str_f1[20];
+		int id_f1;
+		char str_mc[20];
+		int id_mc;
+		char str_retard[20];
+		int id_retard;
+		int *p_retard;
 		int id_win = ini_mem(rc);
 		p_win = map_mem(id_win);
 
